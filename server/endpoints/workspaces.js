@@ -25,6 +25,7 @@ const {
   determineWorkspacePfpFilepath,
   fetchPfp,
 } = require("../utils/files/pfp");
+const { WorkspaceMetaResponse } = require("../models/workspaceMetaResponse");
 
 function workspaceEndpoints(app) {
   if (!app) return;
@@ -84,6 +85,37 @@ function workspaceEndpoints(app) {
           response.sendStatus(400).end();
           return;
         }
+        if (
+          !currWorkspace.metaResponse &&
+          !currWorkspace.metaResponseSettings &&
+          data.metaResponse
+        ) {
+          const metaResponseDefaultSettings =
+            WorkspaceMetaResponse.defaultSettings;
+          const currentSystemPrompt =
+            data.openAiPrompt ||
+            currWorkspace.openAiPrompt ||
+            WorkspaceMetaResponse.defaultSystemPrompt;
+          Object.keys(metaResponseDefaultSettings).map((feature) => {
+            metaResponseDefaultSettings[feature].config.systemPrompt.content =
+              currentSystemPrompt;
+            metaResponseDefaultSettings[feature].config.systemPrompt.list[0] = {
+              title: "Default",
+              content: currentSystemPrompt,
+            };
+          });
+          data.metaResponseSettings = JSON.stringify(
+            metaResponseDefaultSettings
+          );
+          await EventLogs.logEvent(
+            "workspace_meta_response_enabled",
+            {
+              workspaceName: currWorkspace?.name || "Unknown Workspace",
+            },
+            user?.id
+          );
+        }
+
         await Workspace.trackChange(currWorkspace, data, user);
         const { workspace, message } = await Workspace.update(
           currWorkspace.id,
@@ -569,5 +601,4 @@ function workspaceEndpoints(app) {
     }
   );
 }
-
 module.exports = { workspaceEndpoints };

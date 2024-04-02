@@ -102,6 +102,8 @@ model workspaces {
   topN                         Int?                           @default(4)
   chatMode                     String?                        @default("chat")
   pfpFilename                  String?
+  metaResponse                 Boolean?                       @default(false)
+  metaResponseSettings         String?
   workspace_users              workspace_users[]
   documents                    workspace_documents[]
   workspace_suggested_messages workspace_suggested_messages[]

@@ -36,6 +36,7 @@ function ShowWorkspaceChat() {
       setWorkspace({
         ..._workspace,
         suggestedMessages,
+        metaResponseSettings: JSON.parse(_workspace.metaResponseSettings),
         pfpUrl,
       });
       setLoading(false);

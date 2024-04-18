@@ -169,7 +169,7 @@ export default function WorkspaceAgentConfiguration({ workspace }) {
             disabled={true}
           />
           <GenericSkill
-            title="View and summarize documents"
+            title="View & summarize documents"
             description="Allow the agent to list and summarize the content of workspace files currently embedded."
             settings={settings}
             enabled={true}
@@ -181,6 +181,14 @@ export default function WorkspaceAgentConfiguration({ workspace }) {
             settings={settings}
             enabled={true}
             disabled={true}
+          />
+          <GenericSkill
+            title="Generate charts"
+            description="Enable the default agent to generate various types of charts from data provided or given in chat."
+            skill="create-chart"
+            settings={settings}
+            toggleSkill={toggleAgentSkill}
+            enabled={skills.includes("create-chart")}
           />
           <GenericSkill
             title="Generate & save files to browser"

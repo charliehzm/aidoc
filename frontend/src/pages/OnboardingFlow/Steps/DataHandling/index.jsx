@@ -337,6 +337,9 @@ export default function DataHandling({ setHeader, setForwardBtn, setBackBtn }) {
           </ul>
         </div>
       </div>
+      <p className="text-white/60 text-sm font-medium py-1">
+        These settings can be reconfigured at any time in the instance settings.
+      </p>
     </div>
   );
 }

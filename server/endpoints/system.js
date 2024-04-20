@@ -44,6 +44,11 @@ const {
 } = require("../utils/helpers/chat/convertTo");
 const { EventLogs } = require("../models/eventLogs");
 const { CollectorApi } = require("../utils/collectorApi");
+const {
+  recoverAccount,
+  resetPassword,
+  generateRecoveryCodes,
+} = require("../utils/PasswordRecovery");
 
 function systemEndpoints(app) {
   if (!app) return;
@@ -174,6 +179,24 @@ function systemEndpoints(app) {
           existingUser?.id
         );
 
+        // Check if the user has seen the recovery codes
+        if (!existingUser.seen_recovery_codes) {
+          const plainTextCodes = await generateRecoveryCodes(existingUser.id);
+
+          // Return recovery codes to frontend
+          response.status(200).json({
+            valid: true,
+            user: existingUser,
+            token: makeJWT(
+              { id: existingUser.id, username: existingUser.username },
+              "30d"
+            ),
+            message: null,
+            recoveryCodes: plainTextCodes,
+          });
+          return;
+        }
+
         response.status(200).json({
           valid: true,
           user: existingUser,
@@ -218,6 +241,49 @@ function systemEndpoints(app) {
     } catch (e) {
       console.log(e.message, e);
       response.sendStatus(500).end();
+    }
+  });
+
+  // Recover account by generating temp pw reset token
+  app.post("/system/recover-account", async (request, response) => {
+    try {
+      const { username, recoveryCodes } = reqBody(request);
+      const { success, resetToken, error } = await recoverAccount(
+        username,
+        recoveryCodes
+      );
+
+      if (success) {
+        response.status(200).json({ success, resetToken });
+      } else {
+        response.status(400).json({ success, message: error });
+      }
+    } catch (error) {
+      console.error("Error recovering account:", error);
+      response
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  });
+
+  // Reset password using pw reset token
+  app.post("/system/reset-password", async (request, response) => {
+    try {
+      const { token, newPassword, confirmPassword } = reqBody(request);
+      const { success, message, error } = await resetPassword(
+        token,
+        newPassword,
+        confirmPassword
+      );
+
+      if (success) {
+        response.status(200).json({ success, message });
+      } else {
+        response.status(400).json({ success, error });
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      response.status(500).json({ success: false, message: error.message });
     }
   });
 
